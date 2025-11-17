@@ -4,9 +4,11 @@ import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import {v2 as cloudinary} from "cloudinary"
 import fs from 'fs';
+import PDFParser from "pdf2json";
 
 
-const pdf = (await import("pdf-parse")).default;
+
+
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -210,7 +212,7 @@ VALUES (${userId}, ${`Removed ${object} from image`},${imageUrl}, 'image' ) `;
   }
 };
 
-export const resumeReview= async (req, res) => {
+export const resumeReview = async (req, res) => {
   try {
     const { userId } = req.auth();
     const resume = req.file;
@@ -222,35 +224,51 @@ export const resumeReview= async (req, res) => {
         message: "This feature is only available for premium subscriptions",
       });
     }
-   
-  if(resume.size > 5 * 1024 * 1024){
-    return res.json({success: false, message: "Resume file size exceeds allowed size (5MB)."})
-  }
-  
-  const dataBuffer = fs.readFileSync(resume.path)
-  const pdfData = await pdf(dataBuffer)
 
-  const prompt = `Review the following resume and provide constructive feedback on its strengths , weaknesses, and areas for improvement. Resume Content:\n\n${pdfData.text}`
+    if (resume.size > 5 * 1024 * 1024) {
+      return res.json({
+        success: false,
+        message: "Resume file size exceeds allowed size (5MB).",
+      });
+    }
 
-  const response = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
+    const parser = new PDFParser();
+
+    parser.on("pdfParser_dataError", (err) => {
+      console.error(err.parserError);
+      return res.json({
+        success: false,
+        message: "Invalid or unreadable PDF.",
+      });
     });
-    const content = response.choices[0].message.content;
 
-    await sql`INSERT INTO creations (user_id, prompt, content, type)
-VALUES (${userId}, 'Review the uploaded resume',${content}, 'resume-review' ) `;
+    parser.on("pdfParser_dataReady", async (pdfData) => {
+      const text = pdfData.formImage.Pages
+        .map((page) =>
+          page.Texts.map((t) => decodeURIComponent(t.R[0].T)).join(" ")
+        )
+        .join("\n");
 
-   
+      const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas for improvement:\n\n${text}`;
 
-    res.json({ success: true, content});
+      const response = await AI.chat.completions.create({
+        model: "gemini-2.0-flash",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      const content = response.choices[0].message.content;
+
+      await sql`
+        INSERT INTO creations (user_id, prompt, content, type)
+        VALUES (${userId}, 'Review the uploaded resume', ${content}, 'resume-review')
+      `;
+
+      res.json({ success: true, content });
+    });
+
+    parser.loadPDF(resume.path);
   } catch (error) {
     console.log(error.message);
     res.json({ success: false, message: error.message });
