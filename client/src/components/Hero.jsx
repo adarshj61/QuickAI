@@ -18,8 +18,11 @@ const Hero = () => {
         <button onClick={() => navigate('/ai')} className='bg-primary text-white px-10 py-3 rounded-lg hover:scale-102 active:scale-95 transition cursor-pointer'>Start Creating now</button>
         <button className='bg-white text-black px-10 py-3 rounded-lg hover:scale-102 active:scale-95 transition cursor-pointer'>Watch Demo</button>
       </div>
-      <div className='flex items-center gap-4 mt-8 mx-auto text-gray-600'>
-        <img src={assets.user_group} alt="" className='h-8'/> Trusted by over 1000+ users worldwide
+      <div className='flex items-center flex-col gap-4 mt-8 mx-auto text-gray-600'>
+        <img src={assets.user_group} alt="" className='h-8'/> Trusted by over 100+ users worldwide <br/>
+         <span className="text-sm text-gray-500 mt-0.5">
+          Built with ❤️ by <span className="font-medium">Adarsh Jaiswal</span>
+        </span>
       </div>
     </div>
   )
