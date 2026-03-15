@@ -62,7 +62,7 @@ A **modern AI-powered web platform** that provides multiple intelligent tools fo
 - ⚛️ **React.js** — Component-based frontend  
 - ⚡ **Vite** — Fast development & build tool  
 - 🎨 **CSS / Tailwind CSS** — Responsive UI design  
-- 🤖 **AI APIs** — Text & image processing  
+- 🤖 **GOOGLE AI APIs** — Text & image processing  
 - ☁️ **Vercel** — Deployment & hosting  
 
 ---
