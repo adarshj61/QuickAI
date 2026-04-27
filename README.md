@@ -36,6 +36,7 @@ A **modern AI-powered web platform** that provides multiple intelligent tools fo
 
 - **Blog Title Generator**  
   Create catchy and creative blog titles instantly.
+- ** Currently fixing some bugs**
 
 ---
 
